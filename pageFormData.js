@@ -1,14 +1,11 @@
 // Made by DHGA2763
-
 import { ActionFormData } from "@minecraft/server-ui";
-
 
 /**
  * @typedef ActionFormDataButton
  * @property {string} text
  * @property {string} [iconPath]
 */
-
 
 /** Maximum number of buttons per basic page*/
 const DEFAULT_BUTTON_IN_FORM_VALUE = 5;
