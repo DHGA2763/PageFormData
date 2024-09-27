@@ -29,3 +29,6 @@ system.afterEvents.scriptEventReceive.subscribe(event => {
   });
 
 });
+
+
+// You can test it using the "/scriptevent pageForm:show"  command.
