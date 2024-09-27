@@ -117,7 +117,6 @@ class PageFormData {
      * @param {Player} target 
      * @param {function( { canceled: boolean, page: number, selection: number | undefined } )} [callback] 
      * @param {number} [pageValue] 
-     * @returns {callback}
      */
     show(target, callback, pageValue) {
 
@@ -152,9 +151,9 @@ class PageFormData {
                             return this.show(target, callback, --this.button.length);
 
                         };
-    
+
                     case ++buttons.length:
-    
+
                         if (pageIndex+1 >= this.button.length) {
 
                             return this.show(target, callback, 0);
@@ -164,7 +163,7 @@ class PageFormData {
                             return this.show(target, callback, ++pageIndex);
 
                         };
-    
+
                     default:
 
                         return callback({
@@ -172,11 +171,11 @@ class PageFormData {
                             canceled: false,
                             selection: (pageIndex * buttons.length) + response.selection,
                             page: pageIndex,
-        
+
                         });
-                    
+
                     break;
-    
+
                 };
 
             };
@@ -193,12 +192,9 @@ class PageFormData {
  * @returns {ActionFormDataButton[]}
  */
 function setPageButton(allButton, buttonInFormValue) {
-
     let result = [];
     for (let i = 0; i < allButton.length; i += buttonInFormValue) result.push(allButton.slice(i, i + buttonInFormValue));
     return result;
-
 }
-
 
 export default PageFormData;
