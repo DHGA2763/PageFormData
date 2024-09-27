@@ -57,7 +57,7 @@ class PageFormData {
 
         };
 
-    }
+    };
 
     /**
      * set PageFormData title text
@@ -67,7 +67,7 @@ class PageFormData {
 
         this.titleText = `${titleText}`;
 
-    }
+    };
 
     /**
      * set PageFormData body text
@@ -77,7 +77,7 @@ class PageFormData {
 
         this.bodyText = `${bodyText}`;
 
-    }
+    };
 
     /**
      * add PageFormData button
@@ -88,7 +88,7 @@ class PageFormData {
 
         this.allButton.push({ text, iconPath });
 
-    }
+    };
 
     /**
      * set 'go next page' button text, iconPath
@@ -99,7 +99,7 @@ class PageFormData {
 
         this.nextPageData = { text, iconPath };
 
-    }
+    };
 
     /**
      * set 'go before page' button text, iconPath
@@ -110,7 +110,7 @@ class PageFormData {
 
         this.beforePageData = { text, iconPath };
 
-    }
+    };
 
     /**
      * show PageFormData for target(player)
@@ -195,6 +195,6 @@ function setPageButton(allButton, buttonInFormValue) {
     let result = [];
     for (let i = 0; i < allButton.length; i += buttonInFormValue) result.push(allButton.slice(i, i + buttonInFormValue));
     return result;
-}
+};
 
 export default PageFormData;
