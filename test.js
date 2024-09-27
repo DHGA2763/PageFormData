@@ -3,8 +3,8 @@ import PageFormData from './pageFormData.js';
 
 system.afterEvents.scriptEventReceive.subscribe(event => {
 
-  const player = event?.sourceEntity
-  
+  const player = event?.sourceEntity;
+
   if (event.id != 'pageForm:show') return;
   if (player === undefined) return;
 
