@@ -134,7 +134,7 @@ class PageFormData {
 
             if (response.canceled) {
 
-                return callback( { canceled: true, page: pageIndex } );
+                return callback( { canceled: true, page: ++pageIndex } );
 
             } else {
 
@@ -169,8 +169,8 @@ class PageFormData {
                         return callback({
 
                             canceled: false,
-                            selection: (pageIndex * buttons.length) + response.selection,
-                            page: pageIndex,
+                            selection: (pageIndex * this.buttonInFormValue) + response.selection,
+                            page: ++pageIndex,
 
                         });
 
