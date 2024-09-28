@@ -120,7 +120,7 @@ class PageFormData {
      */
     show(target, callback, pageValue) {
 
-        const pageIndex = pageValue !== undefined ? pageValue : 0;
+        let pageIndex = pageValue !== undefined ? pageValue : 0;
         const form = new ActionFormData();
         form.body(this?.bodyText || '');
         this.button = setPageButton(this.allButton, this.buttonInFormValue);
