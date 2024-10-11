@@ -7,194 +7,117 @@ import { ActionFormData } from "@minecraft/server-ui";
  * @property {string} [iconPath]
 */
 
-/** Maximum number of buttons per basic page*/
-const DEFAULT_BUTTON_IN_FORM_VALUE = 5;
-/** Text and icons for the basic page turn and back buttons */
-const DEFAULT_PAGE_BUTTON = {
-
-    Next: {
-
-        text: '[ NEXT ]',
-        iconPath: 'textures/ui/chevron_grey_right',
-
-    },
-
-    Before: {
-
-        text: '[ BACK ]',
-        iconPath: 'textures/ui/chevron_grey_left',
-
-    },
-
+/** Maximum number of buttons per page */
+const DEFAULT_BUTTONS_PER_PAGE = 5;
+/** Text and icons for the page navigation buttons */
+const DEFAULT_PAGE_BUTTONS = {
+    Next: { text: '[ NEXT ]', iconPath: 'textures/ui/chevron_grey_right' },
+    Back: { text: '[ BACK ]', iconPath: 'textures/ui/chevron_grey_left' },
 };
-/** PageFormData title text design */
-const FORM_TITLE_DESIGN = '<TitleText>§r (<CurrentPage>/<MaxPage>)';
+/** PageFormData title text template */
+const TITLE_TEMPLATE = '<TitleText>§r (<CurrentPage>/<MaxPage>)';
 
 
 /** PageFormData */
 class PageFormData {
 
-    /** 
-     * @param {number} buttonInFormValue 
-     */
-    constructor (buttonInFormValue) {
+    /** @param {number | DEFAULT_BUTTONS_PER_PAGE} buttonsPerPage */
+    constructor(buttonsPerPage = DEFAULT_BUTTONS_PER_PAGE) {
 
-        this.buttonInFormValue = Number(buttonInFormValue) || DEFAULT_BUTTON_IN_FORM_VALUE;
-        /**
-         * @type {ActionFormDataButton[]}
-         */
-        this.allButton = [];
-        this.nextPageData = {
+        this.buttonsPerPage = Number(buttonsPerPage);
+        /** @type {ActionFormDataButton[]} */
+        this.allButtons = [];
+        this.nextPageButton = DEFAULT_PAGE_BUTTONS.Next;
+        this.backPageButton = DEFAULT_PAGE_BUTTONS.Back;
 
-            text: DEFAULT_PAGE_BUTTON.Next.text,
-            icon: DEFAULT_PAGE_BUTTON.Next.iconPath,
+    }
 
-        };
-        this.beforePageData = {
+    /** @param {string} titleText */
+    title(titleText) { this.titleText = String(titleText); }
 
-            text: DEFAULT_PAGE_BUTTON.Before.text,
-            icon: DEFAULT_PAGE_BUTTON.Before.iconPath,
+    /** @param {string} bodyText */
+    body(bodyText) { this.bodyText = String(bodyText); }
 
-        };
+    /** @param {string} text @param {string} [iconPath] */
+    button(text, iconPath) { this.allButtons.push({ text, iconPath }); }
 
-    };
+    /** @param {string} text @param {string} [iconPath] */
+    setNextPageButton(text, iconPath) { this.nextPageButton = { text, iconPath }; };
 
-    /**
-     * set PageFormData title text
-     * @param {string} titleText 
-     */
-    title(titleText) {
-
-        this.titleText = `${titleText}`;
-
-    };
-
-    /**
-     * set PageFormData body text
-     * @param {string} bodyText 
-     */
-    body(bodyText) {
-
-        this.bodyText = `${bodyText}`;
-
-    };
-
-    /**
-     * add PageFormData button
-     * @param {string} text 
-     * @param {string} [iconPath] 
-     */
-    button(text, iconPath) {
-
-        this.allButton.push({ text, iconPath });
-
-    };
-
-    /**
-     * set 'go next page' button text, iconPath
-     * @param {string} text 
-     * @param {string} [iconPath] 
-     */
-    setNextPageData(text, iconPath) {
-
-        this.nextPageData = { text, iconPath };
-
-    };
-
-    /**
-     * set 'go before page' button text, iconPath
-     * @param {string} text 
-     * @param {string} [iconPath] 
-     */
-    setBeforePageData(text, iconPath) {
-
-        this.beforePageData = { text, iconPath };
-
-    };
+    /** @param {string} text @param {string} [iconPath] */
+    setBackPageButton(text, iconPath) { this.backPageButton = { text, iconPath }; }
 
     /**
      * show PageFormData for target(player)
      * @param {Player} target 
-     * @param {function( { canceled: boolean, page: number, selection: number | undefined } )} [callback] 
-     * @param {number} [pageValue] 
+     * @param {function} [callback] 
+     * @param {number} [pageIndex] 
+     * @returns {function({ canceled: boolean, page: number, selection: number | undefined }) | { canceled: boolean, page: number, selection: number | undefined }}
      */
-    show(target, callback, pageValue) {
+    async show(target, callback, pageIndex = 0) {
 
-        let pageIndex = pageValue !== undefined ? pageValue : 0;
+        if (!target) throw new Error(`PageFormData.show(target) - target is undefined`);
+        const callbackTypeIsFunction = typeof callback === "function";
+
         const form = new ActionFormData();
-        form.body(this?.bodyText || '');
-        this.button = setPageButton(this.allButton, this.buttonInFormValue);
-        form.title(FORM_TITLE_DESIGN.replace('<TitleText>', (this?.titleText !== undefined ? `${this.titleText}` : '')).replace('<CurrentPage>', `${pageIndex+1}`).replace('<MaxPage>', `${this.button.length}`));
-        const buttons = this.button[pageIndex];
-        buttons.forEach( button => form.button((button?.text || '§r'), button?.iconPath) );
-        form.button(this.beforePageData.text, this.beforePageData?.iconPath);
-        form.button(this.nextPageData.text, this.nextPageData?.iconPath);
+        form.title(this.getTitle(pageIndex));
+        form.body(this.bodyText || '');
 
-        form.show(target).then((response) => {
+        const buttons = this.getButtonsForPage(pageIndex);
+        buttons.forEach(button => form.button(button.text || '§r', button.iconPath));
 
-            if (response.canceled) {
+        form.button(this.backPageButton.text, this.backPageButton.iconPath);
+        form.button(this.nextPageButton.text, this.nextPageButton.iconPath);
 
-                return callback( { canceled: true, page: ++pageIndex } );
+        const response = await form.show(target);
+        if (response.canceled) {
 
-            } else {
+            if (callbackTypeIsFunction) return callback({ canceled: true, page: ++pageIndex });
+            return { canceled: true, page: ++pageIndex };
 
-                switch (response.selection) {
+        };
+        this.handleResponse(response.selection, buttons.length, pageIndex, target, callbackTypeIsFunction, callback);
 
-                    case buttons.length:
+    }
 
-                        if (pageIndex > 0) {
+    getTitle(pageIndex) {
 
-                            return this.show(target, callback, --pageIndex);
+        return TITLE_TEMPLATE.replace('<TitleText>', this.titleText || '').replace('<CurrentPage>', String(++pageIndex)).replace('<MaxPage>', String(this.getTotalPages()));
 
-                        } else {
+    }
 
-                            return this.show(target, callback, --this.button.length);
+    getTotalPages() { return Math.ceil(this.allButtons.length / this.buttonsPerPage); }
 
-                        };
+    getButtonsForPage(pageIndex) {
 
-                    case ++buttons.length:
+        const start = pageIndex * this.buttonsPerPage;
+        return this.allButtons.slice(start, start + this.buttonsPerPage);
 
-                        if (pageIndex+1 >= this.button.length) {
+    }
 
-                            return this.show(target, callback, 0);
+    handleResponse(selection, buttonsCount, pageIndex, target, callbackTypeIsFunction, callback) {
 
-                        } else {
+        switch (selection) {
 
-                            return this.show(target, callback, ++pageIndex);
+            case buttonsCount:
 
-                        };
+                return this.show(target, callback, pageIndex > 0 ? pageIndex - 1 : this.getTotalPages() - 1);
 
-                    default:
+            case buttonsCount + 1:
 
-                        return callback({
+                return this.show(target, callback, pageIndex + 1 >= this.getTotalPages() ? 0 : pageIndex + 1);
 
-                            canceled: false,
-                            selection: (pageIndex * this.buttonInFormValue) + response.selection,
-                            page: ++pageIndex,
+            default:
 
-                        });
+                if (callbackTypeIsFunction) return callback({ canceled: false, selection: pageIndex * this.buttonsPerPage + selection, page: pageIndex + 1 });
+                return { canceled: false, selection: pageIndex * this.buttonsPerPage + selection, page: pageIndex + 1 };
 
-                    break;
+            break;
 
-                };
+        };
 
-            };
+    }
 
-        });
-
-    };
-
-};
-
-/**
- * @param {ActionFormDataButton[]} allButton 
- * @param {number} buttonInFormValue 
- * @returns {ActionFormDataButton[]}
- */
-function setPageButton(allButton, buttonInFormValue) {
-    let result = [];
-    for (let i = 0; i < allButton.length; i += buttonInFormValue) result.push(allButton.slice(i, i + buttonInFormValue));
-    return result;
-};
+}
 
 export default PageFormData;
